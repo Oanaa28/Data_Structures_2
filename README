@@ -1,0 +1,251 @@
+>> # Tema_3 - Grafuri
+## Realizat de Dima Oana-Mihaela
+
+## Implementarea Temei
+### Tema contine 2 cerinte:
+
+## Cerinta 1
+
+### Structuri utilizate : (graf1.h)
+
+### Main :
+>> Pentru aceasta cerinta am verificat in main daca argumentul din linia de comanda este '1', corespunzator cerintei. Am citit variabilele R, K, L din fisierul de intrare, fiecare variabila avand semnificatia urmatoare :
+- R numarul de rute
+- K numarul de ani
+- L gradul de uzura acceptabil
+Am alocat memorie pentru 3 vectori, vectori in care voi retine:
+- orase1 - vector ce contine prima coloana de orase citite
+- orase2 - vector ce contine a doua coloana de orase citite
+- orase - vector in care salvez toate numele de orase
+Parcurg rutele si salvez in vectorii orase1 si orase2 numele oraselor citite. Construiesc vectorul de orase astfel:
+>>Presupun ca numele oraselor citite nu se afla in vectorul orase (ok1 = 1, respectiv ok2 = 1), parcurg vectorul orase si verific daca gasesc in el denumirile citite. Daca le gasesc contorul ok corespunzator devine 0, iar la finalul parcurgerii, daca ok1 = 1, respectiv ok2 = 1 (nu am gasit numele orasului in vectorul orase), copiez numele in vector.
+
+Salvez apoi numarul de noduri in campul corespunzator al grafului g. 
+- numarul de noduri = numarul de orase salvate in vectorul orase
+Scopul vectorului orase este de a corela un numar(indice in vector) cu o denumire de oras.
+>> Citesc apoi numarul de tronsoane, aloc memorie entru un vector de float-uri ce imi retine valoarea fiecarui tronson pentru ruta curenta si citesc aceste valori salvandu-le in vector.
+
+Folosesc variabilele index1, index2 pentru a salva rezultatul cautarii in vectorul orase a indicilor corespunzatori perechii curente de orase, apelez functia *Construire_Arc* care imi construieste arcul de la index1 la index2 in graf.
+```
+Construire_Arc(g, index1, index2, nr_tronsoane, tronson, orase);
+```
+La final eliberez memoria pentru fiecare tronson citit.
+Apelez functia Degradare ce rezolva cerinta 1 propiu-zisa.
+```
+Degradare(g, orase, K, L);
+```
+Afisez graful nou obtinut cu o functie de afisare si eliberez memoria atat pentru fiecare dintre cei 3 vectori utilizati pentru aceasta cerinta, cat si pentru graf, folosind functia DistrG :
+```
+DistrG(&g, R);
+```
+
+### Functii utilizate (graf1.c):
+
+#### AlocG
+>>>Functia primeste un parametru 'nr', aloca memorie pentru un graf cu maxim nr+1 arce si salveaza in campul n, numarul nr primit ca parametru (nr = numarul de noduri ale grafului alocat).
+
+#### Construire_Arc
+>>>Functia construieste arcul de la index1 la index2 in graf. Ea primeste ca parametri:
+- g - graful in care construim
+- index1 - index-ul primului nod
+- index2 - index-ul celui de-al doilea nod
+- nr_tronsoane - numarul de tronsoane corespunzator celor 2 noduri
+- tronsoane - vector ce retine valorile tronsoanelor
+- orase - vectorul cu numele tuturor oraselor
+
+Functia foloseste un pointer *p de tip *AArc* ce parcurge prin graf pornind de la index1 si cauta pozitia pentru index2. Odata aflata, aloca memorie pentru un nou arc in variabila aux, adauga arcul in graf si completeaza informatiile acestuia: index-ul orasului destinatie si numele acestuia, numarul de tronsoane si valorile acestora. 
+- aux->c va retine valorile tronsoanelor in anul anterior (k-1)
+- aux->c_degradat va retine valorile tronsoanelor degradate in anul k
+
+Initial cele doua sunt iau valorile tronsoanelor initiale.
+
+#### Maxim_Urm
+Functia are ca scop calcularea maximului dintre primele grade de uzura ale fiecarui nod "destinatie" pentru nodul de la indexul 'index_nod', transmis ca parametru. Functia parcurge cu o lista 'L' toate arcele care pleaca din index nod si determina maximul dintre valorile de pe pozitia 0 din vectorul de tronsoane, iar in final returneaza acest maxim.
+
+#### Maxim_Ant
+Functia are ca scop calcularea maximului dintre ultimele grade de uzura ale fiecarui nod ce are ca "destinatie" nodul transmis ca parametru. Functia parcurge nodurile grafului 'g' si pentru fiecare nod parcurge cu o lista 'L' toate arcele acestuia, pentru a gasi indexul orasului transmis ca parametru. Astfel, functia calculeaza valoarea maxima dintre ultimul grad de uzura pentru fiecare nod unde a gasit indexul cautat ca "destinatie" si returneaza acest maxim.
+#### Maxi
+Functia primeste ca parametri doua variabile de tip float si returneaza maximul dintre acestea.
+#### Degradare
+Functia are ca scop modificarea fiecarui grad de uzura dupa K ani.
+Pentru fiecare an, functia parcurge nodurile grafului. Foloseste variabila L pentru a parcurge fiecare arc pentru nodul curent i si actualizeaza astfel gradul de uzura pentru fiecare arc :
+- daca gradul de uzura este diferit de 0, valoarea acestuia se dubleaza
+```
+L->c_degradat[j] = L->c[j] * 2;
+```
+- daca gradul de uzura este 0 verific pe ce pozitie se afla acesta :
+>>> - daca nu este nici pe prima nici pe ultima pozitie, valoarea acestuia va fi reprezentata de maximul dintre gradul de uzura anterior si gradul de uzura urmator, injumatatit.
+
+```
+L->c_degradat[j] = Maxi(L->c[j + 1], L->c[j - 1]) / 2.;
+```
+
+>>> -  daca nu este pe prima pozitie, dar este insa pe ultima, valoarea acestuia va fi reprezentata de maximul injumatatit dintre :
+>>>>> - primele valori din vectorul de grade de uzura al vecinilor ce sunt 'destinatie' pentru nodul 'destinatie' curent al nodului i
+>>>>> - gradul de uzura anterior din vectorul de grade de uzura
+>>>>> - ultimele valori din vect. de grade de uzura al vecinilor ce au ca 'destinatie' aceeasi 'destinatie' cu cea a nodului curent i prin arcul L.
+```
+ L->c_degradat[j] = Maxi(Maxim_Urm(g, L->dest.index_oras), Maxi(L->c[j - 1], Maxim_Ant(g, L->dest.index_oras))) / 2.;
+```
+>>> - daca este pe prima pozitie, dar nu si pe ultima, valoarea acestuia va fi reprezentata de maximul injumatatit dintre :
+>>>>> - ultimele valori din vect. de grade de uzura al vecinilor ce au ca 'destinatie' nodul curent i
+>>>>> - primele valori din vectorul de grade de uzura al vecinilor  ce sunt 'destinatie' pentru nodul curent i
+>>>>> - gradul de uzura urmator din vectorul de grade de uzura.
+```
+L->c_degradat[j] = Maxi(Maxim_Ant(g, i), Maxim_Urm(g, i));
+
+L->c_degradat[j] = Maxi(L->c_degradat[j], L->c[j + 1]) / 2.;
+```
+>>> - daca este atat pe prima pozitie, cat si pe ultima (traseul are un singur grad de uzura), valoarea acestuia va fi reprezentata de maximul injumatatit dintre :
+
+>>>> - ultimele valori din vect. de grade de uzura al vecinilor ce au ca 'destinatie' nodul curent i
+>>>> - primele valori din vectorul de grade de uzura al vecinilor  ce sunt 'destinatie' pentru nodul curent i
+>>>> - primele valori din vectorul de grade de uzura al vecinilor ce sunt 'destinatie' pentru nodul 'destinatie' curent al nodului i
+
+```
+L->c_degradat[j] = Maxi(Maxim_Ant(g, i), Maxim_Urm(g, i));
+
+L->c_degradat[j] = Maxi(L->c_degradat[j], Maxim_Urm(g, L->dest.index_oras)) / 2.;
+```
+Pentru toate aceste cazuri folosesc gredele de uzura din anul anterior (L->c) si actualizez in gradele de uzura din anul curent (L->c_degradat).
+
+Pentru fiecare an, dupa actualizare parcurg iar fiecare nod si fiecare arc si verific daca gradele ajuns mai mari decat 100, daca da le limitez la 100 si actualizez gradele din anul anterior cu noile grade si trec la urmatorul an.
+
+#### Grad_Acceptabil
+Functia primeste 2 parametri :
+- nr_tronsoane = numarul de tronsoane ale unui traseu
+- grade de uzura = vector ce contine gradele de uzura pentru un traseu.
+>>> Functia are ca scop determinarea mediei gradelor de uzura pentru ruta curenta si returneaza aceasta medie.
+
+#### Cauta_Index_Tronsoane
+Functia primeste ca parametri :
+- graful g
+- nod_1 - index-ul primului nod
+- nod_2 - index_ul celui de-al doilea nod.
+>>> Functia are ca scop determinarea arcului din graf dintre nod_1 si nod_2. Ea parcurge fiecare nod si fiecare arc si verifica daca nosul curent este egal cu nod_1 si arcul acestui nod duce la nod_2 si in final returneaza acest arc, daca il gaseste si NULL, daca nu il gaseste.
+
+#### Cauta_Oras
+Functia primeste ca parametri:
+- graful g
+- orase - un vector de string-uri ce retinbe denumirile tuturor oraselor 
+- oras_cautat - un string ce contine orasul cautat
+Functia are ca scop cautarea unui oras (oras_cautat trimis ca parametru) in vectorul de orase si returnarea pozitiei acestuia in vector.
+
+#### Afisare
+Functia primeste ca parametri :
+- iesire - pointer la fisierul de iesire, unde voi afisa
+- graful g
+- R - numarul de rute
+- grad_acceptabil - (L din problema )
+- orase - un vector de string-uri ce retinbe denumirile tuturor oraselor
+- orase1 - vector ce contine prima coloana de orase citite
+- orase2 - vector ce contine a doua coloana de orase citite
+Functia are ca scop afisarea rezultatelor cerute de Cerinta1.
+
+La inceput, se aloca memorie pentru indicii rutelor ce merita pastrate, indici ce vor fi ulterior afisati.
+
+Functia parcurge fiecare ruta, foloseste variabilele index1, index2 pentru a cauta in vectorul orase indicii corespunzatori perechii curente de orase si apeleaza functia *Cauta_Index_Tronsoane* pentru determinarea arcului din graf dintre nod_1 si nod_2 si memoreaza acest arc in variabila L de tip AArc.
+
+Afiseaza apoi perechea de orase, numarul de tronsoane corespunzator acestora si gradele de uzura obtinute dupa K ani. 
+
+Verifica daca media gradelor de uzura curente este mai mica decat gradul acceptat, iar daca da adauga in vectorul de rute pastrate indicele corespunzator rutei curente.
+
+Dupa ce afiseaza toate rutele si informatiile fiecareia, pe ultimul rand, functia afiseaza indicii rutelor ce merita pastrate si elibereaza memoria pentru vectorul ce a retinut acesti indici.
+
+#### DistrG
+Functia distruge graful construit si ii elibereaza : pentru numele oraselor, pentru ambii vectori de grade de uzura si pentru fiecare arc.
+
+## Cerinta 2
+
+### Structuri utilizate : (graf2.h)
+
+### Main:
+Pentru aceasta cerinta am verificat in main daca argumentul din linia de comanda este '2', corespunzator cerintei. Am alocat memorie pentru orasul din care pornesc (oras_start) si l-am citit, apoi am citit variabilele urmatoare :
+- K - numarul maxim de cai ferate care pot fi pastrate
+- M - numarul cailor ferate existente
+Am initializat graful si am alocat memorie pentru acesta. Totodata am alocat memorie pentru urmatorii 3 vectori: 
+- orase1 - vector ce contine prima coloana de orase citite
+- orase2 - vector ce contine a doua coloana de orase citite
+- orase - vector in care salvez toate numele de orase
+Parcurg caile si salvez in vectorii orase1 si orase2 numele oraselor citite. Construiesc vectorul de orase astfel:
+>>Presupun ca numele oraselor citite nu se afla in vectorul orase (ok1 = 1, respectiv ok2 = 1), parcurg vectorul orase si verific daca gasesc in el denumirile citite. Daca le gasesc contorul ok corespunzator devine 0, iar la finalul parcurgerii, daca ok1 = 1, respectiv ok2 = 1 (nu am gasit numele orasului in vectorul orase), copiez numele in vector.
+
+Salvez apoi numarul de noduri in campul corespunzator al grafului g. 
+- numarul de noduri = numarul de orase salvate in vectorul orase
+Scopul vectorului orase este de a corela un numar(indice in vector) cu o denumire de oras. 
+
+Citesc apoi distanta corespunzatoare fiecarei perechi.
+
+Folosesc variabilele index_sursa, index_dest pentru a salva rezultatul cautarii in vectorul orase a indicilor corespunzatori perechii curente de orase, apelez functia *Construire_Arc2* de 2 ori care imi construieste arcul de la index_sursa la index_dest in graf si respectiv arcul de la index_dest la index_sursa in graf.
+```
+/* construire arc de la index1 la index2 */
+Construire_Arc2(g, index_sursa, index_dest, distanta, orase);
+/* construire arc de la index2 la index1 */
+Construire_Arc2(g, index_dest, index_sursa, distanta, orase);
+```
+
+Folosesc variabila 'index_oras_start' pentru a salva rezultatul cautarii in vectorul orase a indicilor corespunzatori orasului de start, apeland functia 'Cauta_Oras2' :
+```
+int index_oras_start = Cauta_Oras2(g, orase, oras_start) + 1;
+```
+Initializez si aloc memorie pentru structura de distante si aplic apoi algoritmul Dijkstra pentru a determina distantele minime de la nodul de start catre celelalte noduri, cat si indicii arcelor cu ajutorul carora am gasit aceste distante. Functia salveaza aceste date in structura de distante.
+```
+Dijkstra(iesire, g, M, K, index_oras_start, orase, d, oras_sursa, oras_dest);
+```
+
+Afisez graful nou obtinut cu o functie de afisare 'Afisare2' si eliberez memoria atat pentru fiecare dintre cei 3 vectori de orase utilizati pentru aceasta cerinta, cat si pentru string-ul ce retine orasul de start, structura de distante si pentru graf, folosind functia DistrG2 :
+```
+DistrG2(&g, R);
+```
+### Functii utilizate (graf2.c):
+
+#### AlocG2
+>>>Functia primeste un parametru 'nr', aloca memorie pentru un graf cu maxim nr+1 arce si salveaza in campul n, numarul nr primit ca parametru (nr = numarul de noduri ale grafului alocat).
+
+#### Cauta_Oras2
+Functia primeste ca parametri:
+- graful g
+- orase - un vector de string-uri ce retinbe denumirile tuturor oraselor 
+- oras_cautat - un string ce contine orasul cautat
+Functia are ca scop cautarea unui oras (oras_cautat trimis ca parametru) in vectorul de orase si returnarea pozitiei acestuia in vector.
+
+#### Constrire_Arc2
+>>>Functia construieste arcul de la index1 la index2 in graf. Ea primeste ca parametri:
+- g - graful in care construim
+- index1 - index-ul primului nod
+- index2 - index-ul celui de-al doilea nod
+- distanta - distanta dintre cele doua noduri
+- orase - vectorul cu numele tuturor oraselor
+
+Functia foloseste un pointer '*p' de tip *AArc* ce parcurge prin graf pornind de la index1 si cauta pozitia pentru index2. Odata aflata, aloca memorie pentru un nou arc in variabila aux, adauga arcul in graf si completeaza informatiile acestuia: index-ul orasului destinatie, numele acestuia si distanta.
+
+#### MinDist2
+Functia primeste ca parametri :
+- nr_noduri - numarul de noduri ale grafului
+- vizitat - vector ce retine valoarea 1 pt. nodurile ce au fost vizitate, respectiv valoarea 0 pt. cele care nu au fost vizitate
+- distanta - vectori de structuri de distante
+
+Functia are ca scop calculeaza minimului din vectorul de distante 
+pt. nodurile nevizitate. Parcurge nodurile, verifica daca nodul curent e mai mic decat ultimul minDist gasit si nu e fost vizitat deja, iar daca aceste conditii sunt respectate salveaza distanta minima curenta si indexul acesteia.
+
+In final, functia returneaza indexul distantei minime gasite.
+
+#### Dijkstra
+Functia are ca scop determinarea distantelor minime de la nodul de start catre celelalte noduri, cat si indicii arcelor cu ajutorul carora am gasit aceste distante. Functia salveaza aceste date in structura de distante. 
+
+#### Interschimbare
+Functia primeste ca parametri 2 variabile de tip int* si are ca scop interschimbarea acestora. Variabila 'aux' este o variabila auxiliara ce este utlizata pentru a realiza interschimbarea.
+
+#### Sortare_Distante
+Functia primeste ca parametri :
+- g - graful
+- d - vectori de structuri de distante
+Functia are ca scop sortarea crescatoare a structurilor distantelor dupa valorile distantelor.
+
+#### Afisare2
+Functia are ca scop afisarea cailor ce vor fi pastrate. Determina intial numarul acestor cai, apoi le afiseaza in ordinea citirii din fisier, aflandu-le indicii pentru fiecare oras din vectorul de orase.
+
+#### DistrG2
+Functia distruge graful construit si ii elibereaza : pentru numele oraselor si pentru fiecare arc.
+
+Rezultat obtinut local : 120/120
